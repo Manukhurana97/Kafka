@@ -1,0 +1,30 @@
+1.	kafka zookeeper  : zookeeper-server-start.bat C:\kafka_2.13-3.3.1\config\zookeeper.properties  //  zookeeper-server-start.sh ~/kafka_2.13-3.0.0/config/zookeeper.properties
+2.	Kafka Start Commend : kafka-server-start.bat C:\kafka_2.13-3.3.1\config\server.properties // kafka-server-start.sh ~/kafka_2.13-3.0.0/config/server.properties
+3.	List All Topics : kafka-topic  // kafka-topics.sh
+
+4.	Kafka Create Topics : kafka-topics –zookeeper 127.0.0.1:2181 –topic <topic name> --create –partitions <partitionNos> --replication-factor <factor Nos>  //   kafka-topics --bootstrap-server localhost:9092 --topic <topic name> --create –partitions <partitionNos> --replication-factor <factor Nos>
+5.	Kafka List All Topics : kafka-topics --bootstrap-server localhost:9092 --list  //   kafka-topics --zookeeper 127.0.0.1:2181 –list
+6.	Describe Kafka Topic :  kafka-topics --zookeeper 127.0.0.1:2181 –topic <topic name> –describe  //    kafka-topics --bootstrap-server localhost:9092 --topic <topic name> --describe
+7.	Delete a Topic : kafka-topics --zookeeper 127.0.0.1:2181 –topic <topic name> --delete //  kafka-topics.sh --bootstrap-server localhost:9092  --delete --topic  <topic name>
+
+8.	Create Producers :  kafka-console-producer.sh --bootstrap-server localhost:9092 --topic <topic name>
+9.	Create Producers With Properties : kafka-console-producer --broker-list localhost:9092 --topic <Topic Name> --producer-property acks=all // kafka-console-producer.sh --bootstrap-server localhost:9092 --topic <topic name> --producer-property acks=all
+10. Create Producers With Key: kafka-console-producer --bootstrap-server localhost:9092 --topic <Topic Name> --property parse.key=true --property key.separator=:
+
+11.	Create Consumers : kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic <Topic Name> // kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic <Topic Name>
+12.	Get All the Message from Beginning :  kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic <Topic Name>  --from-beginning
+13. Get All the Message with time , Key & Value: kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic <Topic Name> --from-beginning --formatter kafka.tools.DefaultMessageFormatter --property print.timestamp=true --property print.key=true --property print.value=true --from-beginning
+
+14.	Group Messages in consumer: kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic <Topic Name>  --group <Group Name> --from-beginning {from beginning is to get all the messages}
+15.	Group Mgs details (checkpoints, count, lags): kafka-consumer-groups --bootstrap-server localhost:9092 --describe -group <Group Name>
+16. Group List :  kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
+17. Group Details : kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group <Group Name>
+
+18.	Resetting the offset : kafka-consumer-groups --bootstrap-server localhost:9092 --group <Group Name> --reset-offsets <Reset Option> --execute --topic <Topic Name> // kafka-consumer-groups.sh --bootstrap-server localhost:9092  --group <group name> --reset-offsets --to-earliest --execute --all-topics
+18.1 Resetting the Offset by 2 (+,-): kafka-consumer-groups.sh --bootstrap-server localhost:9092  --group <group name> --reset-offsets --shift-by -2 --execute --all-topics
+19.	Set Key Value:  kafka-console-producer --broker-list 127.0.0.1:9092 --topic test1 --property parse.key=true --property key.separator=,
+20.	Get Topic Config :  kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --describe
+21.	add Configuration : kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --add-config min.insync.replicas=<No of replica> --alter
+22.	delete Configuration : kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --delete-config min.insync.replicas --alter
+23.	Consumer offset: kafka-topics --zookeeper 127.0.0.1:2181 --describe --topic __consumer_offsets
+24.	Log Compression: kafka-topics --zookeeper 127.0.0.1:2181 --create --topic <TopicName> --partitions 1 --replication-factor 1 --config cleanup.policy=compact --config min.cleanable.dirty.ratio=0.001 --config segment.ms=5000
