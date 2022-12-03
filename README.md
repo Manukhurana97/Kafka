@@ -937,6 +937,7 @@ Large Message using External Store:
 3. Write custom code at the producer / consumer level to handle this pattern.
 ![](images/img_28.png)
 
+
 Sending Large Message in Kafka  eg(2 MB)
 1. **Topic-wise, Kafka-side**, set max message size to 10MB:
    1. Broker side: modify message message.max.bytes
