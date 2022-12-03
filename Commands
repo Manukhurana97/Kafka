@@ -23,8 +23,12 @@
 18.	Resetting the offset : kafka-consumer-groups --bootstrap-server localhost:9092 --group <Group Name> --reset-offsets <Reset Option> --execute --topic <Topic Name> // kafka-consumer-groups.sh --bootstrap-server localhost:9092  --group <group name> --reset-offsets --to-earliest --execute --all-topics
 18.1 Resetting the Offset by 2 (+,-): kafka-consumer-groups.sh --bootstrap-server localhost:9092  --group <group name> --reset-offsets --shift-by -2 --execute --all-topics
 19.	Set Key Value:  kafka-console-producer --broker-list 127.0.0.1:9092 --topic test1 --property parse.key=true --property key.separator=,
+
 20.	Get Topic Config :  kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --describe
-21.	add Configuration : kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --add-config min.insync.replicas=<No of replica> --alter
-22.	delete Configuration : kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --delete-config min.insync.replicas --alter
-23.	Consumer offset: kafka-topics --zookeeper 127.0.0.1:2181 --describe --topic __consumer_offsets
-24.	Log Compression: kafka-topics --zookeeper 127.0.0.1:2181 --create --topic <TopicName> --partitions 1 --replication-factor 1 --config cleanup.policy=compact --config min.cleanable.dirty.ratio=0.001 --config segment.ms=5000
+21 changing Configuration (describe): kafka-config.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name <topic name> --describe.
+22.	add Configuration : kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --add-config min.insync.replicas=<No of replica> --alter // kafka-configs.sh --bootstrap-server 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --add-config min.insync.replicas=<No of replica> --alter
+23.	delete Configuration : kafka-configs --zookeeper 127.0.0.1:2181 --entity-type topics --entity-name <TopicName> --delete-config min.insync.replicas --alter
+
+24.	Consumer offset: kafka-topics --zookeeper 127.0.0.1:2181 --describe --topic __consumer_offsets // kafka-topics.sh --bootstrap-server 127.0.0.1:2181 --describe --topic __consumer_offsets
+
+25.	Log Compression: kafka-topics --zookeeper 127.0.0.1:2181 --create --topic <TopicName> --partitions 1 --replication-factor 1 --config cleanup.policy=compact --config min.cleanable.dirty.ratio=0.001 --config segment.ms=5000 // kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --create --topic <TopicName> --partitions 1 --replication-factor 1 --config cleanup.policy=compact --config min.cleanable.dirty.ratio=0.001 --config segment.ms=5000

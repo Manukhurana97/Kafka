@@ -13,14 +13,14 @@ kafka topic:
 Partition and Offsets:
 
 1. Topics are split in partition (ex: 100 partition)
-    1. each meassage will be ordered in partition.
-    2. Each message within a partition get a increment id , called offset.
-2. kafka topics are immutable, once the data is written into the pertition, it cant be changed.
+    1. each message will be ordered in partition.
+    2. Each message within a partition get an increment id , called offset.
+2. kafka topics are immutable, once the data is written into the partition, it cant be changed.
 3. Data in kafka is kept for only for a limited time(default is 7 days - configurable).
 4. offset only have a meaning for a specific partition.
-   eg: offset 3 in a parttion 0 doesn;t represet the same data as offset 3 of partion 1.
+   eg: offset 3 in a partition 0 doesn't represent the same data as offset 3 of portion 1.
 5. offset are not re-used even if previous mgs is deleted .
-6. Order is guranted only within a partition (not across the partition).
+6. Order is granted only within a partition (not across the partition).
 7. Data is assigned randomly to a partition unless a key is provided.
 8. you can have as many partition as you want.
 
@@ -34,10 +34,10 @@ Producers:
 
 **Producers: Message keys**
 
-1. Producers can choose to send a key with the message (String, number binary etc)
+1. Producers can choose to send a key with the message (String, number binary etc.)
 2. if key = null, data is sent round-robin (partition 0, 1, 2...)
 3. if key != null, the all the message for that key will go in the same partition ( hashing )
-4. A key are typically sent if you need message ordering for a specific field (eg truck id)
+4. A key are typically sent if you need message ordering for a specific field (e.g truck id)
 
 ![](images/img_1.png)
 
@@ -64,7 +64,7 @@ Producers:
 1. Consumers read data from a topic (identified by name) - pull model.
 2. consumers automatically know which broker to read from.
 3. In case of broker failure, consumer know how to cover.
-4. Data is read in order from low to high offset within each partitions.
+4. Data is read in order from low to high offset within each partition.
 
 ![](images/img_2.png)
 
@@ -123,9 +123,9 @@ Producers:
 **Kafka Brokers**
 
 1. A kafka cluster is composed of multiple brokers (servers).
-2. Each brokers is identified with its id (Integers)
-3. Each brokers contain's certain topic partitions.
-4. After connection to any broker(called a boorstrap broker), you will be connected to the entire cluster(kafka client
+2. Each brokers are identified with its id (Integers)
+3. Each brokers contains certain topic partitions.
+4. After connection to any broker(called a bootstrap broker), you will be connected to the entire cluster(kafka client
    have smart mechanics for that).
 5. A good number to get started is 3 brokers , but some big clusters have over 100 brokers.
 
@@ -321,12 +321,12 @@ Producers:
 
 <b>Kafka Topic Availability</b>
 1. Availability : (considering RF=3)
-    1. acks=0 & acks=1 : if one partion is up and considering as ISR, the topic will be available for writes.
+    1. acks=0 & acks=1 : if one partition is up and considering as ISR, the topic will be available for writes.
     2. ack=all: 
-       1. min.insync.replicas=1 (default): the topic must have at least 1 partition up as in ISR (that includes the reader) and so we can tolerate two broker being down.
-       2. min.insync.replicas=2: the topic must have at least 2 ISR up, and therefore we can tolerate at most one broker being down (in the case of replication factor of 3), and we have the guarantee that for every write, the data will be at least written twice.
-       3. min.insync.replicas=3: this wouldn't make ush since for a corresponding replication factor of 3, and we could't tolerate any broker going down.
-       4. in summary, when acks=all with a replication.factor=N and min.insync.replicas=M we ca tolerate N-M brokers going for topic available purposes.
+       1. min.in-sync.replicas=1 (default): the topic must have at least 1 partition up as in ISR (that includes the reader) and so we can tolerate two broker being down.
+       2. min.in-sync.replicas=2: the topic must have at least 2 ISR up, and therefore we can tolerate at most one broker being down (in the case of replication factor of 3), and we have the guarantee that for every write, the data will be at least written twice.
+       3. min.in-sync.replicas=3: this wouldn't make ush since for a corresponding replication factor of 3, and we couldn't tolerate any broker going down.
+       4. in summary, when acks=all with a replication.factor=N and min.in-sync.replicas=M we can tolerate N-M brokers going for topic available purposes.
 
 ** acks=all and min.insync.replicas=2 is the most popular options for data durability and allows you to withstand at most the loss of **one** kafka broker.
 
@@ -335,7 +335,7 @@ Producers:
 
 1. In case of transient failure, developer are expected to handle exceptions, otherwise the data will be lost.
 2. Example of transient failure: 
-   1. NOT_ENOUGH_REPLICAS (due to min.insync.replicas setting): 
+   1. NOT_ENOUGH_REPLICAS (due to min.in-sync.replicas setting): 
 3. There is <z style="color:blue">"reties"</z> 
    1. default to 0 for kafka <= 2.0
    2. default to 2147483647 for kafka >= 2.1
@@ -626,3 +626,326 @@ Producer Default partitioner when key=null
    6. Works for any application size.
 
 ![](images/img_23.png)
+
+
+**Need of a Schema Registry**
+<table>
+<ul> 
+<li>kafka takes bytes as an input and publishes them .</li>
+<li>No data verification</li>
+<li>what if producer send bad data or field get renamed? </li>
+<li>The consumer will break.</li>
+<li>We need a data to be a self.</li>
+<li>We need a data to be self describe</li>
+<li>We need to be able to evolve data without breaking downstream consumer</li>
+<li>we need a schema and schema registry!</li>
+</ul>
+</table>
+
+
+1. what if the Kafka brokers were verifying the message they receive?
+2. It would break what makes kafka sk good.
+   1. Kafka doesn't parse or even read you data (no CPY usage).
+   2. Kafka takes bytes as an inout without even loading them into memory (that's called zero copy)
+   3. kafka distributes bytes.
+   4. As far as kafka is concerned, it doesn't even know if your data is an integer, a string etc.
+   5. The schema Registry must be a separate components.
+   6. Producers and Consumers need to ve able to talk to it.
+   7. Teh schema Registry must be able to reject bad data.
+   8. A common data must be agreed upon.
+      1. It needs to support schemas
+      2. It needs to support evolution
+      3. It needs to be lightweight.
+      
+   9. Enter  the Schema Registry
+   10. And Apache **Avro** as the data format.
+
+
+**Schema Registry - Purpose** 
+1. Store and retrieve schemas for Producers/Consumers.
+2. Enforce backend / Forward / Full compatibility on topics.
+3. Decrease the size of the payload of data sent to kafka.
+![](images/img_22.png)
+4. Utilizing a schema registry has a lot of benefits.
+5. BUT it implies you need to:
+   1. set it up well
+   2. make sure it's highly available
+   3. Partially change the producer and consumers code.
+6. Apache Avro as a format is awesome but has a learning curve.
+7. Other formats includes Protobuf and JSON Schema.
+8. The Confluent Schema Registry is free and source-available.
+9. Other open source alternative may exist.
+
+
+
+**Partitions Count and Replication Factor**
+1. The 2 main important parameters when creating a topic.
+2. They impact performance and durability of the system overall.
+3. It is best to get the parameters right the first time.
+   1. If the partitions count increase during a topic lifecycle, you will break your keys ordering guarantees.
+   2. If the replication factor increase during a topic lifecycle, you put more pressure on your cluster, which can lead to unexpected performance decrease.
+
+
+**Choose the Partitions Count**
+1. Each partition can handle a throughput of a MB/s (measure it for your setup).
+2. more partition implies:
+   1. Better parallelism, better throughput
+   2. Ability to run more consumers in a group to scale (max as many consumers per group as partitions).
+   3. Ability to leverage more brokers if you have a large cluster.
+   4. But more elections to perform for Zookeeper (if using Zookeeper).
+   5. But more files opened on Kafka.
+
+
+<b><u>Guidelines: </u></b>
+1. Partitions per topic
+   1. (Intuition) small cluster (<6) : 3x# brokers
+   2. (Intuition) Big cluster (>12 brokers): 2x# of brokers
+   3. Adjust for number of consumers you need to run in parallel at peak throughput.
+   4. Adjust for producer throughput.
+   
+
+
+**Choosing the Replication factor**
+1. Should be at least 2, usually 3, maximum 4
+2. The higher the replication factor (N):
+   1. Better durability of your system (N-1 brokers can fail).
+   2. Better availability of your system (N-min insync.replicas if producer acks=all)
+   3. But more replication (higher latency if acks=all)
+   4. But more disk space on your system (50% more if RF is 3 instead of 2)
+
+
+<b><u>Guidelines: </u></b>
+1. Set it to 3 to get started (you must have at least 3 brokers for that)
+2. If replication performance is an issue, get a better broker instead of less RF.
+3. Never set it to 1 in production.
+
+**Cluster guidelines**
+1. Total number of partitions in the cluster:
+   1. Kafka with Zookeeper : max 200,000 partitions.
+      1. Still recommended a max of 4000 partitions per broker (soft limit).
+   2. Kafka with kRaft: potentially millions of partitions.
+
+
+**Kafka topic naming convention**
+
+https://cnr.sh/essays/how-paint-bike-shed-kafka-topic-naming-conventions
+
+
+
+**Kafka CLuster Setup - High Level Architecture**
+
+1. You want multiple broker in different data center (racks) to distribute your load, You also want a cluster of at least 3 Zookeeper (if using Zookeeper)
+2. In AWS:
+   ![](images/img_23.png)
+
+
+**Kafka Cluster Setup Gotchas**
+1. It's not easy to setup a cluster
+2. You want to isolate each Zookeeper & Broker on Separate Servers.
+3. Monitoring needs to be implemented.
+4. Operations must ve mastered.
+5. you need a excellent kafka Admin.
+6. Alternative managed "Kafka as a Service" offerings from various companies.
+   1. Amazon MSK, Confluence Cloud, Aiven, CloudKarafta, Upstash, etc.
+   2. No operational burdens (updates, monitoring, setup, etc...)
+
+
+**Other components to properly setup**
+
+1. Kafka connect Clusters.
+2. Kafka Schema Registry: make sure to run two for high availability.
+3. Ui Tools for ease of administration.
+
+
+**Other Components to properly Setup**
+
+1. kafka Connect Clusters.
+2. Kafka Schema Registry: make sure to run two for high availability.
+3. Ui tools for ease administration.
+4. Admin Tools for automation workflow.
+
+
+**Kafka Monitoring and Operations.**
+
+1. Kafka exposes metrics through JMX.
+2. These metrics are highly important for monitoring kafka and ensuring the Systems are behaving correctly under load.
+3. Common places to hosts the Kafka metrics:
+   1. ELK
+   2. Datadog
+   3. newRelic
+   4. Confluent Control Center.
+
+
+**Kafka Monitoring**
+
+Some of the most important metrics are: 
+1. <u>Under Replicated Partitions</u>: Number of partitions are have problems with the ISR (in-sync replicas). May indicate a high load on the system
+2. <u>Request Handlers </u>: utilization of threads for IO , network, etc ... overall utilization of an Apache Kafka broker.
+3. <u>Request timing </u>: hot long it takes to reply to request. Lower is better as latency will be improved.
+
+
+
+**Partitions and Segments**
+
+1. Topics are made of partitions (we already know that).
+2. Partitions are made of.... segments (files)!
+![](images/img_24.png)
+3.  Only one segment is ACTIVE (the one data is being written to / last one).
+4. Two segment settings:
+   1. log.segment.bytes: the max size of a single segment in bytes (default 1GB)
+   2. log.segment.ms: the time kafka will wait before committing the segment if not full (1 week)
+   
+
+
+**Segments and Indexes**
+1. Segments come with two indexed (files):
+   1. An offset to position index: helps kafka find where to read from to find a message.
+   2. A timestamp to offset index: helps Kafka find message with a specific timestamp.
+   
+
+![](images/img_25.png)
+
+
+1. A Smaller log.segment.bytes (size, default : 1 gb) means:
+   1. More segments per partitions
+   2. Log Compaction happens more often.
+   3. Kafka must keep more files opened 
+
+2. A small log.segment.ms (time, default 1 week) means:
+   1. you set a mex frequency for log compaction (more frequency triggers).
+   2. maybe you want default compaction instead of weekly.
+   
+
+**Log Cleanup Policy**
+1. Many Kafka Cluster make data expire, according to a policy
+2. That concept is called log cleanup.
+
+<b>policy 1</b>: log.cleanup.policy=delete(kafka default for all user topics)
+1. Delete based on age of data (efault is a week).
+2. Delete based on max size of log (default is -1 == infinite)
+
+<b>policy 2</b>: log.cleanup.policy=compact (kafka default for topic _consumer_offsets)
+1. Delete based on keys of your message
+2. Will delete old duplicate keys <b><u>after</u><b> the active segment is committed.
+3. Infinite time and space retention.
+
+
+**Log Clean**
+1. Deleting data from kafka allows you to :
+   1. Control the size of the data on the disk, delete obsolete data.
+   2. Overall: Limit maintenance work on the Kafka Cluster.
+2. How often does log cleanup happens?
+   1. Log Cleanup happens on you partition segments!
+   2. Smaller / More segments means that log cleanup will happen more often.
+   3. Log cleanup shouldn't happen to often => takes CPU and RAM resources.
+   4. The cleaner checks for work every 15 seconds (log.cleaner.backoff.ms)
+
+
+**Log Cleanup Policy : Delete**
+
+1. log.retention.hours: 
+   1. numbers of hours to keep data for (default is 168 - one week)
+   2. Higher number means more disk space.
+   3. Lower number means that less data is retained (if your consumers are down for too long, they can miss data).
+   4. Other parameters allowed : log.retention.ms, log.retention.minutes (smaller unit has precedence).
+
+2. log.retention.bytes: 
+   1. max size in bytes for each partition (default is -1-infinite)
+   2. Useful to keep the size of a log under a threshold.
+
+3. Use cases - two common pair of options:
+   1. One week of retention:
+      1. log.retention.hours=168 and log.retention.bytes=-1
+   2. Infinite time retention bounded by 500MB:
+      1. log.retention.ms=1 and log.retention.bytes=5244288000
+
+
+**Log Cleanup Policy: Compact**
+
+1. Log compaction ensure that you log contains at least last known value for a specific key within a partition.
+2. Very useful if we just require a SNAPSHOT instead if full history (such as for a data table in a database).
+3. The idea is that we only keep the latest "update" for a key in our log.
+
+**Example**
+1. Our topic is: employee-salary
+2. We want to keep the most recent salary for our employees
+![](images/img_26.png)
+
+
+
+**Log Compaction Guarantees**
+
+1. Any consumer that is reading from the tail of a log (most current data) will still see all the message sent to the topic.
+2. Ordering of messages it kept, log compaction only removes some messages, but does not re-order them.
+3. The offset of a message is immutable (it never changes). Offsets are just skipped if a message is missing.
+4. Deleted records can still by consumers for a period of delete.retention.ms (default 24 hours).
+
+
+
+**Log Compaction Myth busting**
+
+1. It doesn't you from pushing duplicate data to kafka.
+   1. De-duplication is done after a segment is committed.
+   2. your consumers will read from tail as soon as the data arrives.
+2. It doesn't prevent you from reading duplicate data from kafka.
+   1. Same points as above.
+3. Log Compaction can fail from time to time.
+   1. It is an optimization and it the compaction thread might crash.
+   2. Make sure you assign enough memory to it and that is get triggered 
+   3. Reset kafka if log compaction is broken.
+4. you can't trigger compaction using an API call (for now...);
+
+
+
+**Log Compaction **
+
+
+![](images/img_27.png)
+1. Log compaction log.cleanup.policy=compact is impacted by:
+   1. segment.ms (default 7days): Max amount of time to wait to close active segment.
+   2. segment.bytes (default 1G): Max size of segment
+   3. min.compaction.lag.ms (default 0): how long to wait before a message can be compacted.
+   4. deleting.retention.ms (default 24 hours): wait before deleting data marked for compaction.
+   5. min.cleanable.dirty.radio (default 0.5): higher => less, more efficient cleaning. 
+
+https://www.conduktor.io/kafka/kafka-topic-configuration-log-compaction
+
+
+
+**unclean.leader.election.enable**
+
+1. If all your In sync replicas go offline (but you still have out of sync replicas up), you have the following option:
+   1. Wait for an ISR to come back online (default)
+   2. Enable unclear.leader.election.enable=true and start producing to non ISR partitions
+2. If you enable unclear.leader.election.enable=true, you improve availability , but you will lose data because otherwise message on ISR will ve discarded when that come back online and replicate data from the new leader.
+3. Overall, this is a very dangerous setting, and its implication must ve understand fully before enabling it.
+4. Use cases, include metrics collection, log collection, and other cases where data loss is somewhat acceptable, at the trade-off of availability.
+
+
+**Large messages in Apache kafka**
+
+1. Kafka has a default of 1 MB per message in topic, as large message are considered inefficient and an anti-pattern.
+2. Two approaches to sending large messages:
+   1. Using an external store: store message in HDFC, Amazon S3, Google Cloud Storage, etc... and send a reference of that message ti Apache Kafka.
+   2. Modifying Kafka parameters: must change broker, producer and consumer settings.
+
+
+
+Large Message using External Store:
+1. Store the large message (e.g video, archive file, etc...) outside of kafka.
+2. Send a reference of that message of kafka.
+3. Write custom code at the producer / consumer level to handle this pattern.
+![](images/img_28.png)
+
+Sending Large Message in Kafka  eg(2 MB)
+1. **Topic-wise, Kafka-side**, set max message size to 10MB:
+   1. Broker side: modify message message.max.bytes
+   2. Topic size: modify message max.message.bytes
+   3. Warning: the setting have similar but different name; this is not a typo!
+2. **Broker-wise**, set max replication fetch size to 10MB
+   1. replica.fetch.max.bytes=2048
+3. **Consumer-side**, must increase fetch size of the consumer will crash:
+   1. max.partition.fetch.bytes=2048
+4. **Producer-side**, must increase the max request size
+   1. max.request.size=2048
+
