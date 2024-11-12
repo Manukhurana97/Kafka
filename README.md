@@ -2,31 +2,31 @@
 
 kafka topic:
 
-1. It's a particular streams of data , eg : logs, tweets purchases, gps_data
+1. It's a particular streams of data , eg : logs, tweets, purchases, gps_data
 2. List like a table in a database (without any constraints).
-3. you can have as many topic as you want.
+3. You can have as many topic as you want.
 4. A topic is identified by its name.
 5. Support any kind of format eg json, xml....
-6. sequence of message is called a DataStream.
-7. you cant query topic, instead use the kafka producer to send the data and kafka consumer to read the data
+6. Sequence of message is called a DataStream.
+7. You <b>can't</b> query topic, instead use the kafka producer to send the data and kafka consumer to read the data
 
 Partition and Offsets:
 
 1. Topics are split in partition (ex: 100 partition)
     1. each message will be ordered in partition.
     2. Each message within a partition get an increment id , called offset.
-2. kafka topics are immutable, once the data is written into the partition, it cant be changed.
+2. kafka topics are <b>immutable</b>, once the data is written into the partition, it cant be changed.
 3. Data in kafka is kept for only for a limited time(default is 7 days - configurable).
-4. offset only have a meaning for a specific partition.
+4. Offset only have a meaning for a specific partition.
    eg: offset 3 in a partition 0 doesn't represent the same data as offset 3 of portion 1.
-5. offset are not re-used even if previous mgs is deleted .
+5. Offset are not re-used even if previous mgs is deleted .
 6. Order is granted only within a partition (not across the partition).
 7. Data is assigned randomly to a partition unless a key is provided.
-8. you can have as many partition as you want.
+8. You can have as many partition as you want.
 
 Producers:
 
-1. Producers write data toa topics (which ate made fo partitions).
+1. Producers write data to a topics (which is made fo partitions).
 2. Producers know to which partition to write to (and which kafka broker has it).
 3. In case of kafka broker failure, producers will automatically recover.
 
@@ -41,9 +41,13 @@ Producers:
 
 ![](images/img_1.png)
 
+**KAFKA messages anatomy**
+
+![](images/img_29.png)
+
 **Kafka Message Serializer**
 
-1. kafka only accept bytes as na inout from the producer and send bytes out as output to consumer.
+1. kafka only accept bytes as an input from the producer and send bytes out as output to consumer.
 2. Message Serialization means transforming object/data into bytes.
 3. They are used on the value on the key.
 4. Common Serializers
@@ -51,6 +55,15 @@ Producers:
     2. int, float
     3. avro
     4. protobuff
+
+**kafka Message key Hashing**  
+
+1. A kafka partitioner is a code logic that takes a record and determines to which partition to send it into.
+2. <b>Key Hashing</b> is the process of determining the mapping of a key of a partition.
+3. By default kafka partitioner  using murmur2 algo, formula 
+   Target = math.abs(Util.murmur2(keyBytes)) % (numPartition - 1)
+
+![](images/img_30.png)
 
 **Kafka Message hashing**
 
