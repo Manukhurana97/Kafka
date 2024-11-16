@@ -13,7 +13,7 @@ kafka topic:
 Partition and Offsets:
 
 1. Topics are split in partition (ex: 100 partition)
-    1. each message will be ordered in partition.
+    1. Each message will be ordered in partition.
     2. Each message within a partition get an increment id , called offset.
 2. kafka topics are <b>immutable</b>, once the data is written into the partition, it cant be changed.
 3. Data in kafka is kept for only for a limited time(default is 7 days - configurable).
@@ -23,6 +23,10 @@ Partition and Offsets:
 6. Order is granted only within a partition (not across the partition).
 7. Data is assigned randomly to a partition unless a key is provided.
 8. You can have as many partition as you want.
+9. Note**: each partition has one leader and multiple replicas
+
+
+------------------------------------------------------------------------------------
 
 Producers:
 
@@ -56,15 +60,6 @@ Producers:
     3. avro
     4. protobuff
 
-**kafka Message key Hashing**  
-
-1. A kafka partitioner is a code logic that takes a record and determines to which partition to send it into.
-2. <b>Key Hashing</b> is the process of determining the mapping of a key of a partition.
-3. By default kafka partitioner  using murmur2 algo, formula 
-   Target = math.abs(Util.murmur2(keyBytes)) % (numPartition - 1)
-
-![](images/img_30.png)
-
 **Kafka Message hashing**
 
 1. A kafka partitioner is a code logic that takes a record and determine to which partition to send it into.
@@ -72,12 +67,17 @@ Producers:
 3. In the default kafka partitioner, the key are hashed using the murmur2 algo with the formula.
    <b><i>formula: targetPartition = Math.abs(Utils.murmur2(keyBytes)) % (numPartitions - 1)</i></b>
 
+![](images/img_30.png)
+
+------------------------------------------------------------------------------------
+
 **Consumer**
 
 1. Consumers read data from a topic (identified by name) - pull model.
-2. consumers automatically know which broker to read from.
+2. Consumers automatically know which broker to read from.
 3. In case of broker failure, consumer know how to cover.
-4. Data is read in order from low to high offset within each partition.
+4. Data is read in order from low to high offset <u><b>within each partition.</b></u>
+5. Ordering is not guarantee outside partition**
 
 ![](images/img_2.png)
 
@@ -96,10 +96,10 @@ Producers:
 
 **Consumers Group**
 
-1. ALl the consumers in an application read data as a consumer groups.
+1. All the consumers in an application read data as a consumer groups.
 2. Each consumer's within a group reads from exclusive partition.
 
-**Consumers Group**
+**Consumers Group : Too many Partition**
 
 1. if you have more consumers than partitions, some consumers will be inactive.
 2. Multiple consumer on one topic
@@ -114,6 +114,7 @@ Producers:
 2. The offsets committed are in kafka _topic_ named ___consumer_offsets_
 3. When a consumer in a group has processed data received from a kafka , it should be periodically committing the
    offset (the kafka broker will write to ___consumer_offsets_ , not the group itself)
+4. Note**: Offsets are on;y relevant at level : topic-partition
 
 ![](images/img_5.png)
 
@@ -121,26 +122,32 @@ Producers:
 
 1. By default, Java Consumers will automatically commit offsets (at least once).
 2. There are 3 delivery semantics if you choose to commit manually.
-3. At least once (usually preferred)
+3. <b>At least once (usually preferred)</b>
     1. Offsets are committed after the message is processed.
     2. If the processing goes wrong, the message will be read again.
-    3. This can result in duplicate procesing of message , Make sure your preprocessing is idempotent (i.e processing
+    3. This can result in duplicate processing of message , Make sure your preprocessing is idempotent (i.e processing
        again the message won't impact your systems).
-4. At most ones.
+4. <b>At most ones.</b>
     1. Offsets are committed as soon as messages are received.
     2. if the processing goes wrong, some message will be lost (they won't be read again).
-5. Exactly ones.
+5. <b>Exactly ones.</b>
     1. For kafka => kafka workflows: use the Transactional API (easy with Kafka Streams API)
     2. for kafka => External System workflows: use an idempotent consumers.
+
+<b style='color: red'>Note: </b> you only need to connect to one broker (any broker) ans just provide the topic name you
+want to read from. kafka will route your calls to the appropriate brokers and partitions for you!
+
+------------------------------------------------------------------------------------
 
 **Kafka Brokers**
 
 1. A kafka cluster is composed of multiple brokers (servers).
-2. Each brokers are identified with its id (Integers)
-3. Each brokers contains certain topic partitions.
+2. Each broker is identified with its id (Integers)
+3. Each brokers contain certain topic partitions.
 4. After connection to any broker(called a bootstrap broker), you will be connected to the entire cluster(kafka client
    have smart mechanics for that).
 5. A good number to get started is 3 brokers , but some big clusters have over 100 brokers.
+6. Note** : Broker contains only a subset of the topic and the partition
 
 **Brokers and topics**
 
@@ -149,31 +156,39 @@ Producers:
 
 ![](images/img_6.png)
 
+
 **Kafka Broker Discovery**
 
 1. Each kafka broker is called "bootstrap server".
-2. That means that _you only need to connect to one broker, and the kafka client will know how to be connected to the
+2. That means that <b>you only need to connect to one broker</b>, and the kafka client will know how to be connected to the
    entire cluster (smart client).
 3. Each broker know about all brokers, topics and partitions (metadata).
 
+<b style ='color: red'>Note: </b> you only need to connect to one broker (any broker) and just provide the kafka topic name you want to 
+write to.kafka client will route your data to that broker and partition for you
+
 ![](images/img_7.png)
+
+------------------------------------------------------------------------------------
 
 **Topic replication factor**
 
 1. Topic should have a replication factor >1 (usually between 2 and 3 ).
 2. This way if a broker is down, another broker can serve the data.
 3. Ex : Topic - A with partition and replication factor of 2.
+4. Note**: If a topic has a replication factor of 3: Each partition will live on 2 different brokers
 
 ![](images/img_8.png)
 
 **Concept of Leader for a partition**
 
-1. At any time only ONe broker can be leader of a given partition.
-2. Producer can only send data to the broker that is the leader of partition.
+1. <b>At any time only one broker can be leader of a given partition.
+2. Producer can only send data to the broker that is the leader of partition.</b>
 3. The other brokers will replicate the data.
-4. Therefore, each partition has one leader and multiple (ISR-In sync replication).
+4. Therefore, each partition has one leader and multiple ISR (In sync replication).
 
 ![](images/img_9.png)
+
 
 **Default producers and Consumers behaviour with leaders.**
 
@@ -185,6 +200,8 @@ Producers:
 1. Since kafka 2.4, it is possible to configure consumer to read from the closet replica.
 2. This mey help improve latency, and also decrease network costs if using the cloud.
 
+------------------------------------------------------------------------------------
+
 **Producer Acknowledgement**
 
 1. Producers can choose to receive acknowledgement of data writes :
@@ -192,6 +209,12 @@ Producers:
     2. ack=2: Producer will wait for leader acknowledge (limited data loss).
     3. ack=all: Leader + replica acknowledgement (no data loss).
 
+**Kafka Topic Durability**
+1. For a topic replication factor of 3, topic data durability can withstand 2 brokers loss.
+2. As a rule, for a replication factor if N, you can permanently lose upto N-1 broker ans still recover your data.
+
+
+----------------------------------------------------------------------------------- -
 **Zookeeper**
 
 1. Zookeeper manages kafka brokers (keeps a list of them).
@@ -221,7 +244,13 @@ Producers:
        kafka broker, and not from kafka clients.
     6. Therefore, never use Zookeeper as a configuration in your client, and other programs that connect to kafka.
 
+
+
+------------------------------------------------------------------------------------
+
 **Kafka KRaft**
+
+![](images/img_31.png)
 
 1. Zookeeper have scaling issues when kafka cluster have > 100,000 partitions
 2. By removing Zookeeper, Apache kafka can
@@ -230,6 +259,7 @@ Producers:
     3. Single security model form teh whole system.
     4. Single process to start with kafka
     5. Faster Controller shutdown and recovery time.
+
 
 <b><u>Installing kafka</u></b>: https://www.conduktor.io/kafka/starting-kafka
 <b><u>Installing kafka</u></b>: https://www.conduktor.io/kafka/how-to-install-apache-kafka-on-windows
